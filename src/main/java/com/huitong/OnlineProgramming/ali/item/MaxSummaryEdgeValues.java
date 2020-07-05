@@ -4,6 +4,7 @@ import com.sun.javafx.geom.Edge;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
@@ -19,6 +20,7 @@ import java.util.*;
 //        [2,4,6,8,10]
 //        输出：
 //        30
+@Slf4j
 public class MaxSummaryEdgeValues {
 
     public static void main(String[] args) {
@@ -26,18 +28,20 @@ public class MaxSummaryEdgeValues {
         int[] values = {2, 4, 6, 8,10,15};
         MaxSummaryEdgeValues maxValue = new MaxSummaryEdgeValues();
         Result result = maxValue.calculate(pointNum, values);
-        System.out.println("total value:" + result.getTotalValue());
+        log.info("total value:{}", result.getTotalValue());
         result.getEdgeList().forEach(edge ->{
-            System.out.println(edge);
+            List<Point> list = new ArrayList(edge.getPointSet());
+            log.info("Edge:{} -> {}, value:{}", list.get(0).getNum(), list.get(1).getNum(), edge.getEdgeValue());
         });
 
         pointNum = 20;
         int[] values2 = {388,416,902,992,216,316,142,356,864,706,328,136,320,564,82,950,700,238,106,58};
-
+        System.out.println(maxValue.calculate(pointNum, values2));
         result = maxValue.calculate(pointNum, values2);
-        System.out.println("total value:" + result.getTotalValue());
+        log.info("total value:{}", result.getTotalValue());
         result.getEdgeList().forEach(edge ->{
-            System.out.println(edge);
+            List<Point> list = new ArrayList(edge.getPointSet());
+            log.info("Edge:{} -> {}, value:{}", list.get(0).getNum(), list.get(1).getNum(), edge.getEdgeValue());
         });
     }
 
@@ -52,31 +56,24 @@ public class MaxSummaryEdgeValues {
 
     public Result calculate(int pointNum, int[] values) {
         List<Point> pointList = initialPoint(pointNum, values);
-        List<List<Edge>> edgeGroupList = new ArrayList<>();
-
-        pointList.forEach(point -> {
+        int sum = 0;
+        Result result = new Result();
+        for (Point point : pointList) {
             List<Edge> edgeList = new ArrayList<>();
-            pointList.forEach(otherPoint ->{
+            for (Point otherPoint : pointList) {
                 if(point.getNum() != otherPoint.getNum()) {
                     Edge edge = new Edge(point, otherPoint);
                     edgeList.add(edge);
                 }
-            });
-            edgeGroupList.add(edgeList);
-        });
-        List<Edge> finalEdgeList = edgeGroupList.get(0);
-        for (int i = 1; i < edgeGroupList.size(); i++) {
-            if (totalEdgeValue(finalEdgeList) < totalEdgeValue(edgeGroupList.get(i))) {
-                finalEdgeList = edgeGroupList.get(i);
+            }
+            int tempSum = totalEdgeValue(edgeList);
+            if( sum < tempSum) {
+                sum = tempSum;
+                result.setEdgeList(edgeList);
             }
         }
-        Result r = new Result();
-        r.setTotalValue(totalEdgeValue(finalEdgeList));
-        finalEdgeList.forEach(edge -> {
-            List<Point> res = new ArrayList(edge.pointSet);
-            r.addEdge("edge:" + res.get(0).getNum() +" -> " + res.get(1).getNum() +",value:" + (res.get(0).getValue() + res.get(1).getValue())/2);
-        });
-        return r;
+        result.setTotalValue(sum);
+        return result;
     }
 
     private int totalEdgeValue(List<Edge> edgeList) {
@@ -92,7 +89,8 @@ public class MaxSummaryEdgeValues {
         private int value;
 
     }
-
+    @Setter
+    @Getter
     class Edge {
         Edge(Point pointA, Point pointB){
             pointSet.add(pointA);
@@ -110,10 +108,6 @@ public class MaxSummaryEdgeValues {
     @Setter
     class Result {
         private int totalValue;
-        private List<String> edgeList = new ArrayList<>();
-
-        private void addEdge(String edge) {
-            edgeList.add(edge);
-        }
+        private List<Edge> edgeList = new ArrayList<>();
     }
 }
